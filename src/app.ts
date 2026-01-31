@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
+import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import 'express-async-errors';
@@ -21,6 +22,12 @@ app.use(
     crossOriginEmbedderPolicy: false,
   })
 );
+app.use(
+  cors({
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -36,6 +43,8 @@ import reportingRoutes from './routes/reporting.routes';
 
 const swaggerDocument = YAML.load(path.join(__dirname, './docs/swagger.yaml'));
 const swaggerOptions = {
+  explorer: true,
+  customSiteTitle: 'Reporting Service API Docs',
   customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui.min.css',
   customJs: [
     'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui-bundle.min.js',
@@ -43,6 +52,10 @@ const swaggerOptions = {
   ],
 };
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, swaggerOptions));
+
+app.get('/', (req: Request, res: Response) => {
+  res.redirect('/api-docs');
+});
 
 app.use('/api/v1/reporting', reportingRoutes);
 
