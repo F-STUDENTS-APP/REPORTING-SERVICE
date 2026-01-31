@@ -5,10 +5,11 @@ import cookieParser from 'cookie-parser';
 import 'express-async-errors';
 import dotenv from 'dotenv';
 import logger from './config/logger';
-import { sendError } from './utils/response';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import path from 'path';
+import { errorHandler } from '@common/middlewares/error.handler';
+import { healthCheck } from '@common/utils/health';
 
 dotenv.config();
 
@@ -59,18 +60,10 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use('/api/v1/reporting', reportingRoutes);
 
-app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({ status: 'OK', service: 'reporting-service' });
-});
+app.get('/health', healthCheck('reporting-service'));
 
 // Error handling
-app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-  const error = err as Error & { statusCode?: number };
-  logger.error(error.stack);
-  const status = error.statusCode || 500;
-  const message = error.message || 'Internal Server Error';
-  sendError(res, status, message);
-});
+app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(port, () => {
