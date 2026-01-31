@@ -16,13 +16,20 @@ const logger = winston.createLogger({
     new winston.transports.Console({
       format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
     }),
-    new winston.transports.DailyRotateFile({
-      filename: path.join(process.env.LOG_FILE_PATH || './logs', 'auth-service-%DATE%.log'),
-      datePattern: 'YYYY-MM-DD',
-      zippedArchive: true,
-      maxSize: '20m',
-      maxFiles: '14d',
-    }),
+    ...(process.env.VERCEL
+      ? []
+      : [
+          new winston.transports.DailyRotateFile({
+            filename: path.join(
+              process.env.LOG_FILE_PATH || './logs',
+              'reporting-service-%DATE%.log'
+            ),
+            datePattern: 'YYYY-MM-DD',
+            zippedArchive: true,
+            maxSize: '20m',
+            maxFiles: '14d',
+          }),
+        ]),
   ],
 });
 
