@@ -1,5 +1,18 @@
 import { Response } from 'express';
 
+interface SuccessResponse {
+  success: boolean;
+  message: string;
+  data: unknown;
+  pagination?: unknown;
+}
+
+interface ErrorResponse {
+  success: boolean;
+  message: string;
+  errors?: unknown;
+}
+
 export const sendResponse = (
   res: Response,
   statusCode: number,
@@ -8,12 +21,17 @@ export const sendResponse = (
   data: unknown = null,
   pagination: unknown = null
 ) => {
-  return res.status(statusCode).json({
+  const response: SuccessResponse = {
     success,
     message,
     data,
-    ...(pagination && { pagination: pagination as object }),
-  });
+  };
+
+  if (pagination) {
+    response.pagination = pagination;
+  }
+
+  return res.status(statusCode).json(response);
 };
 
 export const sendError = (
@@ -22,9 +40,14 @@ export const sendError = (
   message: string,
   errors: unknown = null
 ) => {
-  return res.status(statusCode).json({
+  const response: ErrorResponse = {
     success: false,
     message,
-    ...(errors && { errors: errors as object }),
-  });
+  };
+
+  if (errors) {
+    response.errors = errors;
+  }
+
+  return res.status(statusCode).json(response);
 };
