@@ -1,0 +1,156 @@
+openapi: 3.0.0
+info:
+  title: Reporting Service API
+  version: 1.0.0
+  description: API Documentation for Reporting & Analytics Service
+
+servers:
+  - url: http://localhost:3008/api/v1/reporting
+    description: Local Development Server
+
+paths:
+  /dashboard/summary:
+    get:
+      summary: Get dashboard summary
+      tags: [Analytics]
+      parameters:
+        - in: query
+          name: academicYear
+          schema:
+            type: string
+          description: Filter by academic year
+        - in: query
+          name: semester
+          schema:
+            type: string
+          description: Filter by semester
+      responses:
+        200:
+          description: Dashboard summary retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    type: object
+                    properties:
+                      totalViolations: { type: integer }
+                      totalAchievements: { type: integer }
+                      topOffendingClass: { type: string }
+                      topAchievingClass: { type: string }
+                      activeStudents: { type: integer }
+                      pointAverage: { type: number }
+                      averagePresenceRate: { type: number }
+
+  /trends/violations:
+    get:
+      summary: Get violation trends
+      tags: [Analytics]
+      responses:
+        200:
+          description: Violation trends retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        month: { type: string }
+                        count: { type: integer }
+
+  /trends/attendance:
+    get:
+      summary: Get attendance trends
+      tags: [Analytics]
+      responses:
+        200:
+          description: Attendance trends retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date: { type: string }
+                        presenceRate: { type: number }
+
+  /generate:
+    post:
+      summary: Generate a report
+      tags: [Reports]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateReportRequest'
+      responses:
+        200:
+          description: Report generation started
+        400:
+          description: Invalid input
+
+  /history:
+    get:
+      summary: Get export history
+      tags: [Reports]
+      responses:
+        200:
+          description: Export history retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ExportHistory'
+
+components:
+  schemas:
+    GenerateReportRequest:
+      type: object
+      required: [reportType, exportType]
+      properties:
+        reportType:
+          type: string
+          enum: [VIOLATION_SUMMARY, STUDENT_REPORT, ATTENDANCE_REPORT]
+        exportType:
+          type: string
+          enum: [PDF, EXCEL, CSV]
+        filters:
+          type: object
+
+    ExportHistory:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        userId: { type: string }
+        type: { type: string, enum: [PDF, EXCEL, CSV] }
+        reportName: { type: string }
+        reportType: { type: string }
+        status: { type: string, enum: [PENDING, PROCESSING, COMPLETED, FAILED] }
+        fileUrl: { type: string, nullable: true }
+        fileSize: { type: integer, nullable: true }
+        filters: { type: object, nullable: true }
+        error: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }

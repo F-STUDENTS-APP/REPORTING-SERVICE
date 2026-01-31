@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model ExportHistory {
+  id                String            @id @default(uuid())
+  userId            String            // Who triggered the export
+  type              ExportType        // PDF, EXCEL
+  reportName        String
+  reportType        String            // VIOLATION_SUMMARY, STUDENT_REPORT, etc.
+  status            ExportStatus      @default(PENDING)
+  fileUrl           String?
+  fileSize          Int?              // in bytes
+  filters           Json?             // Applied filters
+  
+  error             String?           @db.Text
+  
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@index([userId])
+  @@index([createdAt])
+  @@map("export_history")
+}
+
+model AnalyticsCache {
+  id                String            @id @default(uuid())
+  key               String            @unique // e.g., violation_stats_2024_1
+  data              Json
+  expiredAt         DateTime
+  
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@map("analytics_cache")
+}
+
+enum ExportType {
+  PDF
+  EXCEL
+  CSV
+}
+
+enum ExportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
